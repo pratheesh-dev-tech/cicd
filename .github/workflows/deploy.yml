@@ -1,0 +1,32 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main  # Change this if your branch name is different
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # GitHub Actions runner
+
+    steps:
+      # Checkout the code from the repo
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Set up SSH key for EC2 access
+      - name: Set up SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem  # Add secret EC2_SSH_KEY in GitHub
+          chmod 400 private_key.pem  # Secure the SSH key
+
+      # Deploy to EC2
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@44.210.88.79 << 'EOF'
+            cd /home/ec2-user/cicd  # Path to your project directory
+            git pull origin main     # Pull latest code from GitHub
+            sudo systemctl restart myapp.service  # Restart your application (Replace with your service name)
+          EOF
+
+
